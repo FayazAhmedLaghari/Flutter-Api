@@ -1,8 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-
 import 'Photos.dart';
+class Photos {
+  final int id;
+  final String title;
+  final String url;
+  Photos({required this.id, required this.title, required this.url});
+
+  factory Photos.fromJson(Map<String, dynamic> json) {
+    return Photos(
+      id: json['id'],
+      title: json['title'],
+      url: json['url'],
+    );
+  }
+}
+
 class PhotosApi extends StatefulWidget {
   const PhotosApi({super.key});
 
@@ -11,58 +25,55 @@ class PhotosApi extends StatefulWidget {
 }
 
 class _PhotosApiState extends State<PhotosApi> {
-  List<Photos> photoList=[];
-  Future<List<Photos>> photoApi()async{
-    final response=await http.get(Uri.parse('https://jsonplaceholder.typicode.com/photos'));
-    var data=jsonDecode(response.body.toString());
-    if(response.statusCode==200)
-    {
-      for(Map i in data){
-        photoList.add(Photos.fromJson(i));
-
-      }
-      return photoList;
-    }
-    else
-    {
-      return photoList;
-
+  Future<List<Photos>> fetchPhotos() async {
+    final response = await http
+        .get(Uri.parse('https://jsonplaceholder.typicode.com/photos'));
+    if (response.statusCode == 200) {
+      List<dynamic> data = jsonDecode(response.body);
+      return data.map((e) => Photos.fromJson(e)).toList();
+    } else {
+      throw Exception('Failed to load photos');
     }
   }
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       appBar: AppBar(
         title: Text('Photos API'),
         backgroundColor: Colors.indigo,
         foregroundColor: Colors.white,
       ),
-      body: Column(
-        children: [
-          Expanded(child: FutureBuilder(future:photoApi() , builder:(context,snapshot){
-            return ListView.builder(itemBuilder: (context,index){
-              return Card(
-                child: ListTile(
-
-                  leading:CircleAvatar(
-                    backgroundImage: NetworkImage(snapshot.data![index].url.toString()),
+      body: FutureBuilder<List<Photos>>(
+        future: fetchPhotos(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return Center(child: Text('No photos available'));
+          } else {
+            List<Photos> photos = snapshot.data!;
+            return ListView.builder(
+              itemCount: photos.length,
+              itemBuilder: (context, index) {
+                return Card(
+                  color: const Color.fromARGB(255, 45, 231, 51),
+                  elevation: 5,
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      backgroundImage:NetworkImage(photos[index].url.toString()),
+                    ),
+                    title: Text(photos[index].title.toString()),
+                    subtitle: Text(photos[index].id.toString()),
                   ),
-                  title: Text(snapshot.data![index].title.toString()),
-                  subtitle:Text(snapshot.data![index].id.toString()) ,
-                ),
-              );
-            });
-          }))
-        ],
+                );
+              },
+            );
+          }
+        },
       ),
     );
   }
 }
-//
-// class Photos{
-//   String title;
-//   String url;
-//   Photos({required this.title, required this.url});
-// }

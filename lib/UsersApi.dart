@@ -40,14 +40,13 @@ class _UsersApiState extends State<UsersApi> {
         Expanded(child: FutureBuilder(future: getapi(), builder:(context,AsyncSnapshot<List<UsersModels>> snapshot){
           return ListView.builder(itemCount: userList.length,
               itemBuilder: (context,index){
-
-
-       if (snapshot.connectionState == ConnectionState.waiting) {
-         return Center(child: CircularProgressIndicator(color: Colors.green));
-          } else if (snapshot.hasError) {
-          return Center(child: Text('Error: ${snapshot.error}'));
-            } else if (snapshot.hasData && snapshot.data!.isNotEmpty) {
-         return Card(
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Center(child: CircularProgressIndicator());
+                } else if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return Center(child: Text('No photos available'));
+                } else { return Card(
            color: Colors.green,
            child: ListTile(
              title: Row(
